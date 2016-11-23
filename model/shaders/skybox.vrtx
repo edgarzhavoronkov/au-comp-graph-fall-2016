@@ -1,0 +1,14 @@
+#version 440 core
+
+layout(location = 0) in vec3 vertexPos;
+
+out vec3 texturePos;
+
+uniform mat4 viewProjection;
+
+void main()
+{
+	vec4 tmp = viewProjection * vec4(vertexPos, 1.0);
+	gl_Position = tmp.xyzw;
+	texturePos = vertexPos;
+}
