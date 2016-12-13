@@ -1,3 +1,4 @@
+#include <cmath>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
@@ -93,8 +94,10 @@ GLuint loadSkybox(std :: string filepath)
 	loadTexture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, textureMinusY);
 	loadTexture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, textureMinusZ);
 
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -155,37 +158,35 @@ int main()
 	glBindVertexArray(0);
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
 	glDepthFunc(GL_LESS);
 
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		double time = glfwGetTime();
 
-		glfwPollEvents();
 		glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mat4 projection = perspective(45.0f, (720.0f / 540.0f), 0.1f, 100.0f);
-		vec3 cameraPos(sin(time * 3.145926f * 0.1f), sin(time * 3.145926f * 0.5f * 0.2f), cos(time * 0.2));
-		mat4 view(lookAt(cameraPos, vec3(0, 0, 0), vec3(0, 1, 0)));
+		vec3 cameraPos(sin(time * 2 * pi<double>() * 0.05f), 0.4, cos(time  * 2 * pi<double>() * 0.05f));
+		mat4 view(lookAt(cameraPos, vec3(0, 0.5, 0), vec3(0, 1, 0)));
+		mat4 inverseView = glm::inverse(view);
+
+		glPushAttrib(GL_ENABLE_BIT);
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_BLEND);
+		glDepthMask(false);
+
+		glPushMatrix();
+
+		// inverseModelView is a 4x4 matrix with no translation and a transposed 
+		// upper 3x3 portion from the regular modelview
+		glLoadMatrixf(&inverseView[0][0]);
 		
 		GLint loc;
-
-		glUseProgram(sceneShader);
-		loc = glGetUniformLocation(sceneShader, "viewProjection");
-		assert(loc != -1);
-		
-		glUniformMatrix4fv(loc, 1, GL_FALSE, value_ptr(projection * view));
-
-		loc = glGetUniformLocation(sceneShader, "fromCamera");
-		assert(loc != -1);
-		
-		glUniform3fv(loc, 1, value_ptr(normalize(-cameraPos)));
-
-		glBindVertexArray(VAO);
-		
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		glDrawArrays(GL_TRIANGLES, 0, verts.size() / 3);
 
 		glUseProgram(skyboxShader);
 		
@@ -199,6 +200,28 @@ int main()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
+		glPopAttrib();
+		glPopMatrix();
+		glDepthMask(true);
+		glEnable(GL_DEPTH_TEST);
+		
+		glUseProgram(sceneShader);
+		loc = glGetUniformLocation(sceneShader, "viewProjection");
+		assert(loc != -1);
+
+		glUniformMatrix4fv(loc, 1, GL_FALSE, value_ptr(projection * view));
+
+		loc = glGetUniformLocation(sceneShader, "fromCamera");
+		assert(loc != -1);
+
+		glUniform3fv(loc, 1, value_ptr(normalize(-cameraPos)));
+
+		glBindVertexArray(VAO);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+		glDrawArrays(GL_TRIANGLES, 0, verts.size() / 3);
+
+		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 
