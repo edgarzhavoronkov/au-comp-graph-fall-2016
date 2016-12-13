@@ -1,4 +1,0 @@
-﻿  main.cpp
-d:\university\repos\au-comp-graph-fall-2016\model\src\main.cpp(222): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-  model.vcxproj -> D:\University\repos\au-comp-graph-fall-2016\model\bin\x64\Debug\model.exe
-  model.vcxproj -> D:\University\repos\au-comp-graph-fall-2016\model\bin\x64\Debug\model.pdb (Full PDB)
