@@ -27,7 +27,8 @@ GLfloat height_scale = 0.1;
 GLuint quadVAO = 0;
 GLuint quadVBO;
 
-GLuint loadTexture(GLchar* path) {
+GLuint loadTexture(GLchar* path) 
+{
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glActiveTexture(GL_TEXTURE0);
